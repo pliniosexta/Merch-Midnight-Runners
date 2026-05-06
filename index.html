@@ -18,11 +18,13 @@
   .product-card { background: #12101e; border: 1px solid #2a1f45; border-radius: 20px; overflow: hidden; margin-bottom: 32px; }
   .product-top { display: grid; grid-template-columns: 1fr 1fr; }
   @media (max-width: 580px) { .product-top { grid-template-columns: 1fr; } }
-  .product-gallery { background: #1c1530; position: relative; min-height: 280px; display: flex; align-items: center; justify-content: center; }
+  .product-gallery { background: #1c1530; position: relative; min-height: 280px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .product-gallery img { width: 100%; height: 280px; object-fit: cover; display: block; transition: opacity 0.3s; }
-  .gallery-dots { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
-  .gallery-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3); cursor: pointer; border: none; transition: background 0.2s; }
-  .gallery-dot.active { background: #9b6ee0; }
+  .arrow-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(20,10,40,0.75); border: 1px solid #3a2a5a; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #c0a0f0; font-size: 16px; transition: background 0.2s; z-index: 2; }
+  .arrow-btn:hover { background: #7040c0; border-color: #9b6ee0; }
+  .arrow-left { left: 10px; }
+  .arrow-right { right: 10px; }
+  .img-counter { position: absolute; bottom: 10px; right: 12px; font-size: 11px; color: rgba(200,180,240,0.7); background: rgba(10,8,20,0.6); padding: 2px 8px; border-radius: 20px; }
   .product-info { padding: 28px 24px; display: flex; flex-direction: column; justify-content: space-between; }
   .product-name { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: #fff; margin-bottom: 4px; }
   .product-desc { font-size: 13px; color: #6a5a8a; margin-bottom: 20px; line-height: 1.5; }
@@ -49,7 +51,6 @@
   .add-btn:active { transform: scale(0.98); }
   .divider { border: none; border-top: 1px solid #1e1630; margin: 0 24px 40px; }
   .cart-section { max-width: 860px; margin: 0 auto; padding: 0 24px 24px; }
-  .cart-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: #fff; margin-bottom: 16px; }
   .cart-empty { font-size: 13px; color: #4a3a6a; text-align: center; padding: 24px; background: #0d0b1a; border: 1px solid #1e1630; border-radius: 12px; margin-bottom: 24px; }
   .cart-items { margin-bottom: 16px; }
   .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #0d0b1a; border: 1px solid #1e1630; border-radius: 10px; margin-bottom: 8px; font-size: 14px; }
@@ -101,12 +102,9 @@
     <div class="product-top">
       <div class="product-gallery">
         <img id="main-img" src="https://pliniosexta.github.io/Merch-Midnight-Runners/calcetines-negro-frente.jpeg" alt="MR Socks">
-        <div class="gallery-dots">
-          <button class="gallery-dot active" onclick="changeImg(0)"></button>
-          <button class="gallery-dot" onclick="changeImg(1)"></button>
-          <button class="gallery-dot" onclick="changeImg(2)"></button>
-          <button class="gallery-dot" onclick="changeImg(3)"></button>
-        </div>
+        <button class="arrow-btn arrow-left" onclick="changeImg(-1)">&#8592;</button>
+        <button class="arrow-btn arrow-right" onclick="changeImg(1)">&#8594;</button>
+        <span class="img-counter" id="img-counter">1 / 2</span>
       </div>
       <div class="product-info">
         <div>
@@ -218,18 +216,24 @@
   let currentImgIdx = 0;
   let cart = [];
 
-  function changeImg(idx) {
-    const allImgs = imgs[selectedColor];
-    currentImgIdx = idx % allImgs.length;
-    document.getElementById('main-img').src = BASE_URL + allImgs[currentImgIdx];
-    document.querySelectorAll('.gallery-dot').forEach((d, i) => d.classList.toggle('active', i === currentImgIdx));
+  function updateGallery() {
+    const list = imgs[selectedColor];
+    document.getElementById('main-img').src = BASE_URL + list[currentImgIdx];
+    document.getElementById('img-counter').textContent = (currentImgIdx + 1) + ' / ' + list.length;
+  }
+
+  function changeImg(delta) {
+    const list = imgs[selectedColor];
+    currentImgIdx = (currentImgIdx + delta + list.length) % list.length;
+    updateGallery();
   }
 
   function selectColor(color) {
     selectedColor = color;
+    currentImgIdx = 0;
     document.getElementById('color-negro').classList.toggle('active', color === 'negro');
     document.getElementById('color-blanco').classList.toggle('active', color === 'blanco');
-    changeImg(0);
+    updateGallery();
   }
 
   function selectSize(size) {
