@@ -76,6 +76,7 @@
   input:focus, select:focus, textarea:focus { border-color: #9b6ee0; }
   select option { background: #1c1530; }
   textarea { resize: vertical; min-height: 70px; }
+  input[type="file"] { padding: 9px 14px; font-size: 13px; }
   .submit-btn { width: 100%; padding: 16px; background: #7040c0; border: none; border-radius: 10px; color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 8px; }
   .submit-btn:hover { background: #9b6ee0; }
   .submit-btn:active { transform: scale(0.98); }
@@ -194,11 +195,37 @@
   <div class="success-msg" id="success">
     <div class="success-icon">🌙</div>
     <p class="success-title">¡Pedido Recibido!</p>
-    <p class="success-text">Gracias por tu pedido. En menos de 24 horas<br>te mandamos los datos de pago por WhatsApp.<br><br>¡Gracias por correr con nosotros!</p>
+    <p class="success-text">Gracias por tu pedido. En menos de 24 horas<br>te mandamos los datos de pago por correo y WhatsApp.<br><br>Cuando hagas tu transferencia, baja a la sección<br>"Sube tu comprobante" para terminar tu compra.</p>
+  </div>
+</div>
+<hr class="divider">
+<div class="form-section" id="comprobante">
+  <p class="section-label">Confirmar pago</p>
+  <p class="form-title">Sube tu Comprobante</p>
+  <p class="form-subtitle">Usa la referencia que te llegó en tu correo de confirmación de pedido</p>
+  <div id="comprobante-form">
+    <div class="form-grid">
+      <div class="field full">
+        <label>Referencia de pedido</label>
+        <input type="text" id="comp-referencia" placeholder="MR482910">
+      </div>
+      <div class="field full">
+        <label>Comprobante (imagen o PDF)</label>
+        <input type="file" id="comp-archivo" accept="image/*,.pdf">
+      </div>
+    </div>
+    <div class="error-msg" id="comp-error-msg">Hubo un error al enviar tu comprobante. Intenta de nuevo.</div>
+    <button class="submit-btn" id="comp-submit-btn" onclick="subirComprobante()">Enviar Comprobante →</button>
+    <p class="payment-note">Vamos a revisar tu pago manualmente y te confirmamos por correo</p>
+  </div>
+  <div class="success-msg" id="comp-success">
+    <div class="success-icon">✅</div>
+    <p class="success-title">¡Comprobante Recibido!</p>
+    <p class="success-text">Vamos a revisar tu pago y te confirmamos<br>en cuanto quede validado.<br><br>¡Gracias por tu compra!</p>
   </div>
 </div>
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw_rvoS2kQdBU8U-sL40Qba72mGUNbSicA76H1k0zArQkMfmYNVwncwGerrrUQs5d2G3w/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw_rvoS2kQdBU8U-sL40Qba72mGUNbSicA76H1k0zArQkMfmYNVwncwGerrrUQs5d2G3w/exec';
   const BASE_URL = 'https://pliniosexta.github.io/Merch-Midnight-Runners/';
   const PRECIO_UNIDAD = 299;
   const PRECIO_PAR = 499;
@@ -304,6 +331,50 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw_rvoS2kQdBU8U
     } catch(err) {
       btn.disabled = false; btn.textContent = 'Enviar Pedido →';
       document.getElementById('error-msg').classList.add('show');
+    }
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function subirComprobante() {
+    const referencia = document.getElementById('comp-referencia').value.trim();
+    const archivoInput = document.getElementById('comp-archivo');
+    const archivo = archivoInput.files[0];
+
+    document.getElementById('comp-error-msg').classList.remove('show');
+
+    if (!referencia || !archivo) {
+      alert('Por favor escribe tu referencia y adjunta tu comprobante.');
+      return;
+    }
+
+    const btn = document.getElementById('comp-submit-btn');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+
+    try {
+      const archivoBase64 = await fileToBase64(archivo);
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo: 'comprobante',
+          referencia,
+          archivoBase64,
+          tipoArchivo: archivo.type || 'application/octet-stream',
+          nombreArchivo: archivo.name
+        })
+      });
+      document.getElementById('comprobante-form').style.display = 'none';
+      document.getElementById('comp-success').classList.add('show');
+    } catch (err) {
+      btn.disabled = false; btn.textContent = 'Enviar Comprobante →';
+      document.getElementById('comp-error-msg').classList.add('show');
     }
   }
 </script>
